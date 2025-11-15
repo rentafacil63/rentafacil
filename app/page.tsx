@@ -21,9 +21,12 @@ export default function Home() {
               Comenzar ahora
             </Button>
           </Link>
-          <Button size="lg" variant="outline">
-             <Link href="/diagnostico">Empezar mi diagnóstico</Link>
-          </Button>
+
+          <Link href="/diagnostico">
+            <Button size="lg" variant="outline">
+              Empezar mi diagnóstico
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -47,10 +50,14 @@ export default function Home() {
 
       {/* CTA */}
       <div className="container mx-auto px-4 py-16 text-center bg-blue-600 text-white rounded-lg my-12">
-        <h2 className="text-3xl font-bold mb-4">¿Aún no sabes si te toca declarar?</h2>
-        <Button size="lg" variant="secondary" className="text-blue-600">
-          Hacer consulta gratis
-        </Button>
+        <h2 className="text-3xl font-bold mb-4">
+          ¿Aún no sabes si te toca declarar?
+        </h2>
+        <Link href="/diagnostico">
+          <Button size="lg" variant="secondary" className="text-blue-600">
+            Hacer consulta gratis
+          </Button>
+        </Link>
       </div>
     </main>
   )

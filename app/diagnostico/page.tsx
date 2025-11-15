@@ -5,11 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabaseClient";
+import Link from "next/link";
+
+const anioActual = new Date().getFullYear();
 
 export default function DiagnosticoPage() {
-  const [anio, setAnio] = useState(2024);
+  const [anio, setAnio] = useState(anioActual);
   const [ingresos, setIngresos] = useState("");
   const [patrimonio, setPatrimonio] = useState("");
+
+  const [tieneIngresosLaborales, setTieneIngresosLaborales] = useState(false);
+  const [tieneIngresosIndependiente, setTieneIngresosIndependiente] =
+    useState(false);
+  const [tieneCuentasInversion, setTieneCuentasInversion] = useState(false);
+
   const [resultadoTexto, setResultadoTexto] = useState<string | null>(null);
   const [mensajeGuardado, setMensajeGuardado] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
@@ -32,14 +41,27 @@ export default function DiagnosticoPage() {
       return;
     }
 
-    // Lógica simple (luego metemos topes reales DIAN)
+    // --- Lógica simple de MVP (luego afinamos con topes reales DIAN) ---
     let resultadoEnum: "SI" | "NO" | "DUDOSO" = "NO";
     let texto = "";
 
-    if (ingresosNum > 60000000 || patrimonioNum > 200000000) {
+    const cercaIngresos = ingresosNum > 50_000_000 && ingresosNum <= 60_000_000;
+    const cercaPatrimonio =
+      patrimonioNum > 180_000_000 && patrimonioNum <= 200_000_000;
+
+    if (ingresosNum > 60_000_000 || patrimonioNum > 200_000_000) {
       resultadoEnum = "SI";
       texto =
         "Según los datos ingresados, probablemente SÍ estás obligado a declarar renta.";
+    } else if (
+      cercaIngresos ||
+      cercaPatrimonio ||
+      tieneIngresosIndependiente ||
+      tieneCuentasInversion
+    ) {
+      resultadoEnum = "DUDOSO";
+      texto =
+        "Por los datos ingresados estás cerca de los topes o tienes situaciones que conviene revisar con detalle. Te recomendamos una revisión completa de tu declaración.";
     } else {
       resultadoEnum = "NO";
       texto =
@@ -66,9 +88,9 @@ export default function DiagnosticoPage() {
       anio_gravable: anio,
       ingresos_brutos: ingresosNum,
       patrimonio_bruto: patrimonioNum,
-      tiene_cuentas_inversion: null,
-      tiene_ingresos_laborales: null,
-      tiene_ingresos_independiente: null,
+      tiene_cuentas_inversion: tieneCuentasInversion,
+      tiene_ingresos_laborales: tieneIngresosLaborales,
+      tiene_ingresos_independiente: tieneIngresosIndependiente,
       resultado: resultadoEnum,
       resumen: texto,
     });
@@ -125,6 +147,44 @@ export default function DiagnosticoPage() {
             />
           </div>
 
+          {/* Preguntas adicionales del diagnóstico 2.0 */}
+          <div className="space-y-2">
+            <p className="text-sm font-medium">
+              Marca lo que aplique a tu caso:
+            </p>
+
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={tieneIngresosLaborales}
+                onChange={(e) => setTieneIngresosLaborales(e.target.checked)}
+              />
+              <span>Tuviste ingresos como empleado (salarios)</span>
+            </label>
+
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={tieneIngresosIndependiente}
+                onChange={(e) =>
+                  setTieneIngresosIndependiente(e.target.checked)
+                }
+              />
+              <span>Tuviste ingresos como independiente / honorarios</span>
+            </label>
+
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={tieneCuentasInversion}
+                onChange={(e) => setTieneCuentasInversion(e.target.checked)}
+              />
+              <span>
+                Tienes cuentas de ahorro, CDT u otras inversiones financieras
+              </span>
+            </label>
+          </div>
+
           <Button onClick={handleCalcular} disabled={cargando}>
             {cargando ? "Calculando..." : "Calcular diagnóstico"}
           </Button>
@@ -134,9 +194,17 @@ export default function DiagnosticoPage() {
           )}
 
           {mensajeGuardado && (
-            <p className="mt-2 text-sm text-muted-foreground">
-              {mensajeGuardado}
-            </p>
+            <div className="mt-2 space-y-2">
+              <p className="text-sm text-muted-foreground">
+                {mensajeGuardado}
+              </p>
+
+              {mensajeGuardado.includes("guardado") && (
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/panel">Ver mis diagnósticos</Link>
+                </Button>
+              )}
+            </div>
           )}
         </div>
       </div>
