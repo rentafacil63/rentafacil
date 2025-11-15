@@ -1,4 +1,4 @@
-// app/login/page.tsx
+// app/registro/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -7,21 +7,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
-export default function LoginPage() {
-  const router = useRouter();
-
+export default function RegistroPage() {
+  const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mensaje, setMensaje] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
 
-  const handleLogin = async () => {
+  const handleRegistro = async () => {
     setMensaje(null);
     setCargando(true);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    // 1. Crear el usuario en auth
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
@@ -32,15 +31,36 @@ export default function LoginPage() {
       return;
     }
 
-    setMensaje("Ingreso exitoso. Redirigiendo al panel...");
-    // Enviar al panel o al diagnóstico
-    router.push("/panel"); // o "/diagnostico"
+    // 2. Crear registro en tabla perfil (opcional, pero útil)
+    const user = data.user;
+    if (user) {
+      await supabase.from("perfil").insert({
+        id: user.id,
+        nombre: nombre || null,
+        documento: null,
+      });
+    }
+
+    setMensaje(
+      "Cuenta creada. Revisa tu correo si se requiere confirmación, y luego inicia sesión."
+    );
+    setCargando(false);
   };
 
   return (
     <main className="min-h-screen flex items-center justify-center px-4">
       <div className="max-w-md w-full space-y-6">
-        <h1 className="text-2xl font-bold text-center">Iniciar sesión</h1>
+        <h1 className="text-2xl font-bold text-center">Crear cuenta</h1>
+
+        <div className="space-y-2">
+          <Label htmlFor="nombre">Nombre</Label>
+          <Input
+            id="nombre"
+            placeholder="Tu nombre completo"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+          />
+        </div>
 
         <div className="space-y-2">
           <Label htmlFor="email">Correo electrónico</Label>
@@ -58,37 +78,24 @@ export default function LoginPage() {
           <Input
             id="password"
             type="password"
+            placeholder="Mínimo 6 caracteres"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
 
-        <Button onClick={handleLogin} disabled={cargando}>
-          {cargando ? "Ingresando..." : "Ingresar"}
+        <Button onClick={handleRegistro} disabled={cargando}>
+          {cargando ? "Creando cuenta..." : "Registrarme"}
         </Button>
-        <p className="text-sm text-muted-foreground">
-          ¿Olvidaste tu contraseña?{" "}
-          <Link href="/recuperar" className="underline">
-            Recuperarla aquí
-          </Link>
-        </p>
-
 
         {mensaje && <p className="text-sm mt-2">{mensaje}</p>}
 
         <p className="text-sm text-muted-foreground">
-          ¿No tienes cuenta?{" "}
-          <Link href="/registro" className="underline">
-            Regístrate aquí
+          ¿Ya tienes cuenta?{" "}
+          <Link href="/login" className="underline">
+            Inicia sesión aquí
           </Link>
         </p>
-
-        <p className="text-sm text-muted-foreground">
-        ¿Quieres volver al inicio?{" "}
-        <Link href="/" className="underline">
-          Ir al home
-        </Link>
-</p>
       </div>
     </main>
   );
