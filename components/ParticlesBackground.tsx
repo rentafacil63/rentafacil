@@ -8,20 +8,21 @@ export function ParticlesBackground() {
     <Particles
       id="tsparticles"
       init={async (engine) => {
+        // carga el bundle completo de tsParticles
         await loadFull(engine);
       }}
       className="absolute inset-0 z-0 pointer-events-none"
       options={{
-        fullScreen: { enable: false }, // ocupa el contenedor padre
+        fullScreen: { enable: false },
         background: {
-          color: { value: "transparent" }, // si quieres probar, pon "#ff0000"
+          color: { value: "transparent" },
         },
         particles: {
           number: {
             value: 80,
             density: { enable: true, area: 800 },
           },
-          color: { value: "#67ff71" },  // verde fosforescente
+          color: { value: "#67ff71" },
           size: {
             value: 4,
             random: true,
