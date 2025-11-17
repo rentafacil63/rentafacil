@@ -1,102 +1,77 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { motion, type Variants } from "framer-motion";
 import { ParticlesBackground } from "@/components/ParticlesBackground";
 
 type SplashProps = {
-  duration?: number;
-  redirectTo?: string;
+  duration?: number; // milisegundos
 };
 
 const PARTICLE_TEXT = "BUILDING INTELLIGENT SYSTEMS";
 
-export default function Splash({
-  duration = 3000,
-  redirectTo = "/home",
-}: SplashProps) {
+const containerVariants: Variants = {
+  hidden: { opacity: 0, scale: 0.9 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.6, ease: "easeOut" },
+  },
+  exit: {
+    opacity: 0,
+    scale: 1.05,
+    transition: { duration: 0.4, ease: "easeIn" },
+  },
+};
+
+export default function Splash({ duration = 3000 }: SplashProps) {
   const [visible, setVisible] = useState(true);
   const [showText, setShowText] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
-    const t1 = setTimeout(() => setShowText(true), 400);
-    const t2 = setTimeout(() => {
+    // Mostrar texto/logo un poco después
+    const textTimer = setTimeout(() => setShowText(true), duration * 0.3);
+
+    // Ocultar splash al final
+    const hideTimer = setTimeout(() => {
       setVisible(false);
-      router.push(redirectTo);
     }, duration);
 
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
+      clearTimeout(textTimer);
+      clearTimeout(hideTimer);
     };
-  }, [duration, redirectTo, router]);
+  }, [duration]);
 
   if (!visible) return null;
 
-  const charVariants: Variants = {
-    hidden: (custom: number) => {
-      const angle = custom * 23.7;
-      const radius = 40 + (custom % 5) * 8;
-      const x = Math.cos((angle * Math.PI) / 180) * radius;
-      const y = Math.sin((angle * Math.PI) / 180) * radius;
-
-      return {
-        opacity: 0,
-        x,
-        y,
-        scale: 0.5,
-        filter: "blur(8px)",
-      };
-    },
-    visible: (custom: number) => ({
-      opacity: 1,
-      x: 0,
-      y: 0,
-      scale: 1,
-      filter: "blur(0px)",
-      transition: {
-        delay: 0.03 * custom,
-        duration: 0.5,
-        ease: "easeOut",
-      },
-    }),
-  };
-
   return (
-    <div className="min-h-screen w-screen flex flex-col items-center justify-center bg-[#050910] text-white overflow-hidden relative">
-      {/* FONDO DE PARTÍCULAS */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
+      {/* Partículas de fondo */}
       <ParticlesBackground />
 
-      {/* LOGO */}
-      <div className="flex flex-col items-center relative z-10">
-        <Image
-          src="/LogoBisNew.png"
-          alt="BIS Logo"
-          width={220}
-          height={220}
-          priority
-          className="drop-shadow-[0_0_20px_rgba(103,255,113,0.5)] animate-pulseGlow"
-        />
-      </div>
-
-      {/* TEXTO tipo "partículas" */}
-      <div className="mt-6 text-lg sm:text-xl md:text-2xl font-semibold text-[#67ff71] relative z-10">
-        {PARTICLE_TEXT.split("").map((char, i) => (
-          <motion.span
-            key={i}
-            custom={i}
-            variants={charVariants}
-            initial="hidden"
-            animate={showText ? "visible" : "hidden"}
-            className="inline-block tracking-[0.25em]"
-          >
-            {char === " " ? "\u00A0" : char}
-          </motion.span>
-        ))}
-      </div>
+      {/* Contenido central */}
+      <motion.div
+        className="relative flex flex-col items-center justify-center px-4 py-6 text-center"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
+      >
+        {showText && (
+          <>
+            <div className="text-xs font-semibold tracking-[0.25em] text-muted-foreground uppercase mb-2">
+              {PARTICLE_TEXT}
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight mb-1">
+              RENTAFACIL
+            </h1>
+            <p className="text-xs text-muted-foreground">
+              Calculando tu experiencia inteligente...
+            </p>
+          </>
+        )}
+      </motion.div>
     </div>
   );
 }

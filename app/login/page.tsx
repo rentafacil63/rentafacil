@@ -1,95 +1,95 @@
-// app/login/page.tsx
 "use client";
 
-import { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { useState, FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+
+import { supabaseBrowser } from "@/lib/supabaseBrowser";
+
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [mensaje, setMensaje] = useState<string | null>(null);
-  const [cargando, setCargando] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const handleLogin = async () => {
-    setMensaje(null);
-    setCargando(true);
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    setLoading(true);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabaseBrowser.auth.signInWithPassword({
       email,
       password,
     });
 
+    setLoading(false);
+
     if (error) {
-      setMensaje(`Error: ${error.message}`);
-      setCargando(false);
+      console.error(error);
+      setErrorMsg("Correo o contraseña incorrectos.");
       return;
     }
 
-    setMensaje("Ingreso exitoso. Redirigiendo al panel...");
-    // Enviar al panel o al diagnóstico
-    router.push("/panel"); // o "/diagnostico"
+    // Login OK → ir al panel
+    router.push("/home");
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4">
-      <div className="max-w-md w-full space-y-6">
-        <h1 className="text-2xl font-bold text-center">Iniciar sesión</h1>
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle className="text-base font-semibold">
+            Inicia sesión en Rentafacil
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <div className="space-y-1">
+              <Label htmlFor="email">Correo electrónico</Label>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tu@correo.com"
+                required
+              />
+            </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="email">Correo electrónico</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="tucorreo@ejemplo.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
+            <div className="space-y-1">
+              <Label htmlFor="password">Contraseña</Label>
+              <Input
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+              />
+            </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="password">Contraseña</Label>
-          <Input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
+            {errorMsg && (
+              <p className="text-sm text-red-600">{errorMsg}</p>
+            )}
 
-        <Button onClick={handleLogin} disabled={cargando}>
-          {cargando ? "Ingresando..." : "Ingresar"}
-        </Button>
-        <p className="text-sm text-muted-foreground">
-          ¿Olvidaste tu contraseña?{" "}
-          <Link href="/recuperar" className="underline">
-            Recuperarla aquí
-          </Link>
-        </p>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Ingresando..." : "Iniciar sesión"}
+            </Button>
 
-
-        {mensaje && <p className="text-sm mt-2">{mensaje}</p>}
-
-        <p className="text-sm text-muted-foreground">
-          ¿No tienes cuenta?{" "}
-          <Link href="/registro" className="underline">
-            Regístrate aquí
-          </Link>
-        </p>
-
-        <p className="text-sm text-muted-foreground">
-        ¿Quieres volver al inicio?{" "}
-        <Link href="/" className="underline">
-          Ir al home
-        </Link>
-</p>
-      </div>
-    </main>
+            <Button variant="ghost" type="button" className="w-full" asChild>
+              <Link href="/">Volver al Inicio</Link>
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
